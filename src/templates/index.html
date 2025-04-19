@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to Disaster Assistant</title>
-    <link rel="stylesheet" href="styles.css">
+    <!-- Use Flask's url_for to load static files -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -47,11 +48,14 @@
 <body>
     <h1>Welcome to Disaster Assistant</h1>
     <p class="welcome-message">Your voice assistant for disaster management.</p>
-    <a href="help.html">Get Help</a>
-    <img src="disaster_image.jpg" alt="Disaster Image" class="disaster-image">
+    <!-- Fixed url_for syntax -->
+    <a href="{{ url_for('help') }}">Get Help</a>
+    <!-- Corrected image path using url_for -->
+    <img src="{{ url_for('static', filename='disaster_image.jpg') }}" alt="Disaster Image" class="disaster-image">
     <div class="footer">
         <p>&copy; 2025 Marvin. All rights reserved.</p>
     </div>
-    <script src="script.js"></script>
+    <!-- Corrected JS path -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

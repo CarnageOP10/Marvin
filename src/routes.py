@@ -13,7 +13,7 @@ def home_page():
     return render_template('index.html')
 
 @app.route('/help')
-def welcome():
+def help():
     state = False
     while(state == False):
         state = wakeup_fn()

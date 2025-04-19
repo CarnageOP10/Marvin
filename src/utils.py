@@ -1,6 +1,37 @@
 from src.models import wakeup_classifier, STT
-from transformers.pipelines.audio_utils import ffmpeg_microphone_live
+import pyaudio
+import numpy as np
 import sys
+
+def get_pyaudio_stream(sampling_rate, chunk_length_s=2.0, stream_chunk_s=0.25):
+    """Returns a generator that yields audio chunks using PyAudio."""
+    p = pyaudio.PyAudio()
+    chunk_size = int(stream_chunk_s * sampling_rate)
+    total_samples = int(chunk_length_s * sampling_rate)
+
+    stream = p.open(
+        format=pyaudio.paFloat32,
+        channels=1,
+        rate=sampling_rate,
+        input=True,
+        frames_per_buffer=chunk_size,
+    )
+
+    try:
+        while True:
+            audio_chunk = []
+            remaining_samples = total_samples
+
+            while remaining_samples > 0:
+                chunk = stream.read(min(chunk_size, remaining_samples))
+                audio_chunk.append(np.frombuffer(chunk, dtype=np.float32))
+                remaining_samples -= len(audio_chunk[-1])
+
+            yield np.concatenate(audio_chunk)
+    finally:
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
 
 def wakeup_fn(
     wake_word="marvin",
@@ -16,7 +47,7 @@ def wakeup_fn(
 
     sampling_rate = wakeup_classifier.feature_extractor.sampling_rate
 
-    mic = ffmpeg_microphone_live(
+    mic = get_pyaudio_stream(
         sampling_rate=sampling_rate,
         chunk_length_s=chunk_length_s,
         stream_chunk_s=stream_chunk_s,
@@ -29,12 +60,13 @@ def wakeup_fn(
             print(prediction)
         if prediction["label"] == wake_word:
             if prediction["score"] > prob_threshold:
+                print(f"Wake word detected: {prediction['label']}")
                 return True
-            
+
 def transcribe(chunk_length_s=5.0, stream_chunk_s=1.0):
     sampling_rate = STT.feature_extractor.sampling_rate
 
-    mic = ffmpeg_microphone_live(
+    mic = get_pyaudio_stream(
         sampling_rate=sampling_rate,
         chunk_length_s=chunk_length_s,
         stream_chunk_s=stream_chunk_s,
